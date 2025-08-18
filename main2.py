@@ -144,12 +144,12 @@ html_grid += "</div>"
 st.markdown(html_grid, unsafe_allow_html=True)
 
 # --------------------------
-# 카드 클릭 이벤트 (수정된 부분)
+# 카드 클릭 이벤트
 # --------------------------
 query_params = st.experimental_get_query_params()
 if "flip" in query_params:
     flip_card(int(query_params["flip"][0]))
-    st.experimental_set_query_params()  # 클릭 후 URL 깨끗하게 초기화
+    st.experimental_set_query_params()  # 클릭 후 URL 초기화
 
 # --------------------------
 # 기록 표시
@@ -164,11 +164,15 @@ if all(st.session_state.matched) and not st.session_state.finished:
     st.session_state.finished = True
     elapsed = int(time.time() - st.session_state.start_time)
     st.balloons()
-    st.success(f"🎉 축하합니다! {num_pairs}쌍을 모두 맞추셨어요! 🎉\n\n"
-               f"⏱ 최종 시간: {elapsed}초\n🎯 총 시도 횟수: {st.session_state.attempts}")
+    st.success(
+        f"🎉 축하합니다! {num_pairs}쌍을 모두 맞추셨어요! 🎉\n\n"
+        f"⏱ 최종 시간: {elapsed}초\n"
+        f"🎯 총 시도 횟수: {st.session_state.attempts}"
+    )
     if st.button("🔄 다시 시작하기"):
         for key in ["cards","flipped","selected","matched","colors","num_pairs","start_time","attempts","finished"]:
             del st.session_state[key]
+
 
                f"⏱ 최종 시간: {elapsed}초\n🎯 총 시도 횟수: {st.session_state.attempts}")
     if st.button("🔄 다시 시작하기"):
