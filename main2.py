@@ -24,7 +24,7 @@ if not st.session_state.game_started:
         st.session_state.waiting = True
         st.session_state.reaction_time = None
         st.session_state.start_time = None
-        st.experimental_rerun()
+        st.rerun()
 
 # --------------------------
 # 빨간불 대기 상태
@@ -37,7 +37,7 @@ elif st.session_state.waiting:
     time.sleep(wait_time)
     st.session_state.waiting = False
     st.session_state.start_time = time.time()
-    st.experimental_rerun()
+    st.rerun()
 
 # --------------------------
 # 초록불 반응 대기
@@ -52,7 +52,7 @@ elif st.session_state.start_time is not None and st.session_state.reaction_time 
         if st.session_state.best_time is None or st.session_state.reaction_time < st.session_state.best_time:
             st.session_state.best_time = st.session_state.reaction_time
 
-        st.experimental_rerun()
+        st.rerun()
 
 # --------------------------
 # 결과 출력
@@ -68,5 +68,5 @@ elif st.session_state.reaction_time is not None:
         st.session_state.waiting = False
         st.session_state.start_time = None
         st.session_state.reaction_time = None
-        st.experimental_rerun()
+        st.rerun()
 
