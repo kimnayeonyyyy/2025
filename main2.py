@@ -105,7 +105,6 @@ if "cards" not in st.session_state or st.session_state.get("num_pairs") != num_p
 def flip_card(i):
     if st.session_state.finished:
         return
-
     if not st.session_state.flipped[i] and len(st.session_state.selected) < 2:
         st.session_state.flipped[i] = True
         st.session_state.selected.append(i)
@@ -131,9 +130,10 @@ for i, card in enumerate(st.session_state.cards):
     matched = st.session_state.matched[i]
     bg_color = st.session_state.colors[i] if matched else "linear-gradient(135deg, #ff9a9e, #fad0c4)"
 
+    # onclick 이벤트 → query params로 전달
     html_grid += f"""
     <div class="card-container">
-      <div class="card {'flipped' if flipped else ''}" onclick="window.location.href='/?flip={i}'">
+      <div class="card {'flipped' if flipped else ''}" onclick="window.location.href='?flip={i}'">
         <div class="card-face front" style="background:{bg_color};">❓</div>
         <div class="card-face back" style="background:{st.session_state.colors[i]};">{card}</div>
       </div>
@@ -144,12 +144,12 @@ html_grid += "</div>"
 st.markdown(html_grid, unsafe_allow_html=True)
 
 # --------------------------
-# 카드 클릭 이벤트
+# 카드 클릭 이벤트 (수정된 부분)
 # --------------------------
-query_params = st.query_params
+query_params = st.experimental_get_query_params()
 if "flip" in query_params:
-    flip_card(int(query_params["flip"]))
-    st.query_params.clear()
+    flip_card(int(query_params["flip"][0]))
+    st.experimental_set_query_params()  # 클릭 후 URL 깨끗하게 초기화
 
 # --------------------------
 # 기록 표시
@@ -164,7 +164,12 @@ if all(st.session_state.matched) and not st.session_state.finished:
     st.session_state.finished = True
     elapsed = int(time.time() - st.session_state.start_time)
     st.balloons()
-    st.success(f"🎉 축하합니다! {num_pairs}쌍을 모두 맞추셨습니다! 🎉\n\n"
+    st.success(f"🎉 축하합니다! {num_pairs}쌍을 모두 맞추셨어요! 🎉\n\n"
+               f"⏱ 최종 시간: {elapsed}초\n🎯 총 시도 횟수: {st.session_state.attempts}")
+    if st.button("🔄 다시 시작하기"):
+        for key in ["cards","flipped","selected","matched","colors","num_pairs","start_time","attempts","finished"]:
+            del st.session_state[key]
+
                f"⏱ 최종 시간: {elapsed}초\n🎯 총 시도 횟수: {st.session_state.attempts}")
     if st.button("🔄 다시 시작하기"):
         for key in ["cards","flipped","selected","matched","colors","num_pairs","start_time","attempts","finished"]:
