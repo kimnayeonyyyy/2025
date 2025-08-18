@@ -164,17 +164,14 @@ if all(st.session_state.matched) and not st.session_state.finished:
     st.session_state.finished = True
     elapsed = int(time.time() - st.session_state.start_time)
     st.balloons()
-    st.success(
+    st.success((
         f"🎉 축하합니다! {num_pairs}쌍을 모두 맞추셨어요! 🎉\n\n"
         f"⏱ 최종 시간: {elapsed}초\n"
         f"🎯 총 시도 횟수: {st.session_state.attempts}"
-    )
+    ))
     if st.button("🔄 다시 시작하기"):
-        for key in ["cards","flipped","selected","matched","colors","num_pairs","start_time","attempts","finished"]:
-            del st.session_state[key]
-
-
-               f"⏱ 최종 시간: {elapsed}초\n🎯 총 시도 횟수: {st.session_state.attempts}")
-    if st.button("🔄 다시 시작하기"):
-        for key in ["cards","flipped","selected","matched","colors","num_pairs","start_time","attempts","finished"]:
+        for key in [
+            "cards","flipped","selected","matched",
+            "colors","num_pairs","start_time","attempts","finished"
+        ]:
             del st.session_state[key]
