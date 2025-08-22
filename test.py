@@ -18,16 +18,19 @@ max_years = st.sidebar.number_input("최대 시뮬레이션 연도", 1, 100, 50)
 scenario_noise = st.sidebar.slider("연도별 변동 폭 (%)", 0, 50, 10)
 
 # -------------------
-# 세션 초기화
+# 세션 상태 초기화 (항상 먼저)
 # -------------------
-if "year" not in st.session_state:
-    st.session_state.year = 0
-    st.session_state.co2_ppm = [415]
-    st.session_state.temp = [15]
-    st.session_state.photosynth_history = [0]
-    st.session_state.respiration_history = [0]
-    st.session_state.photosynth_eff_history = [base_photosynth]
-    st.session_state.respiration_eff_history = [base_respiration]
+for key, default in {
+    "year": 0,
+    "co2_ppm": [415],
+    "temp": [15],
+    "photosynth_history": [0],
+    "respiration_history": [0],
+    "photosynth_eff_history": [base_photosynth],
+    "respiration_eff_history": [base_respiration]
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 # -------------------
 # 1년 시뮬레이션 (피드백 + 랜덤 변동)
@@ -39,7 +42,7 @@ def simulate_one_year():
     ph_eff = base_photosynth * (1 + random.uniform(-scenario_noise/100, scenario_noise/100))
     resp_eff = base_respiration * (1 + random.uniform(-scenario_noise/100, scenario_noise/100))
 
-    # 피드백: CO₂ 증가 → 광합성 감소 (식물 스트레스)
+    # 피드백: CO₂ 증가 → 광합성 감소
     ph_eff *= max(0.5, 1 - 0.001*(st.session_state.co2_ppm[-1]-415))
 
     photosynth = total_cells * 1 * (ph_eff/100) * (forest_area/50)
@@ -61,6 +64,7 @@ with col1:
         st.session_state.year -= 1
 with col2:
     if st.button("➡️ 다음 년도") and st.session_state.year < max_years:
+        # 아직 계산 안 된 연도면 시뮬레이션
         if st.session_state.year == len(st.session_state.co2_ppm) - 1:
             co2, temp, photo, resp, ph_eff, resp_eff = simulate_one_year()
             st.session_state.co2_ppm.append(co2)
@@ -103,4 +107,3 @@ ax[3].set_xlabel("Year"); ax[3].set_ylabel("%"); ax[3].legend()
 
 st.pyplot(fig)
 st.info(f"연도: {year_idx} | CO₂: {st.session_state.co2_ppm[year_idx]:.2f} ppm | 평균 온도: {st.session_state.temp[year_idx]:.2f} °C")
-
