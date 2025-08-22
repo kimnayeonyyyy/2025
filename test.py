@@ -4,86 +4,71 @@ import matplotlib.pyplot as plt
 import random
 
 st.set_page_config(page_title="진화 가상 실험실", layout="wide")
+st.title("🧬 진화 가상 실험실 - 버튼 탐색 버전")
 
-st.title("🧬 진화 가상 실험실")
-st.write("환경 조건에 따라 개체들이 세대를 거듭하며 적응하는 모습을 관찰할 수 있습니다!")
+# 환경 설정
+temp = st.sidebar.slider("🌡️ 온도", 0, 100, 50)
+food = st.sidebar.slider("🥗 먹이", 0, 100, 50)
+predator = st.sidebar.slider("🦁 포식자", 0, 100, 50)
+gens = st.sidebar.slider("세대 수", 1, 30, 10)
 
-# -------------------
-# 환경 조건 선택
-# -------------------
-st.sidebar.header("🌍 환경 조건 설정")
-temp = st.sidebar.slider("🌡️ 환경 온도 (저온=0 ~ 고온=100)", 0, 100, 50)
-food = st.sidebar.slider("🥗 먹이 풍부함 (적음=0 ~ 많음=100)", 0, 100, 50)
-predator = st.sidebar.slider("🦁 포식자 압력 (낮음=0 ~ 높음=100)", 0, 100, 50)
-
-# -------------------
-# 개체 초기화
-# -------------------
-num_individuals = 50
-num_generations = st.sidebar.slider("세대 수", 1, 50, 20)
-
-# 개체 특성: [털 두께, 체구 크기, 민첩성]
-population = np.random.rand(num_individuals, 3) * 100
+# 초기 세팅
+if "gen" not in st.session_state:
+    N = 30
+    st.session_state.gen = 0
+    st.session_state.history = []
+    init_pop = np.random.rand(N, 3) * 100
+    init_names = [f"Indiv_{i+1}" for i in range(N)]
+    st.session_state.history.append((init_pop, init_names))
 
 def fitness(ind):
-    """적합도 함수: 환경 조건과 개체 특성의 잘 맞는 정도 계산"""
-    fur, size, agility = ind
-    score = 0
+    fur, size, agi = ind
+    return -(abs(fur - temp) + abs(size - (30 if food < 50 else 70)) + abs(agi - (100 - predator)))
 
-    # 온도 → 털 두께 중요
-    score -= abs(fur - temp)
+def evolve_step(pop, names):
+    N = len(pop)
+    scores = np.array([fitness(ind) for ind in pop])
+    idx = np.argsort(scores)[-N//2:]
+    surv, surv_names = pop[idx], [names[i] for i in idx]
+    kids, kid_names = [], []
+    while len(kids) < N:
+        p1, p2 = random.sample(list(surv), 2)
+        cut = random.randint(0, 2)
+        c = np.array([*p1[:cut], *p2[cut:]])
+        if random.random() < 0.3: c += np.random.normal(0, 10, 3)
+        kids.append(np.clip(c, 0, 100))
+        kid_names.append(random.choice(surv_names) + "_child")
+    return np.array(kids), kid_names
 
-    # 먹이 부족 → 작은 체구 유리
-    if food < 50:
-        score -= abs(size - 30)
-    else:
-        score -= abs(size - 70)
+# 버튼 영역
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("⬅️ 이전 세대로") and st.session_state.gen > 0:
+        st.session_state.gen -= 1
+with col2:
+    if st.button("➡️ 다음 세대로") and st.session_state.gen < gens:
+        # 아직 계산 안 된 세대라면 새로 진화시켜 history에 추가
+        if st.session_state.gen == len(st.session_state.history) - 1:
+            pop, names = st.session_state.history[-1]
+            new_pop, new_names = evolve_step(pop, names)
+            st.session_state.history.append((new_pop, new_names))
+        st.session_state.gen += 1
 
-    # 포식자 많을수록 민첩성 중요
-    score -= abs(agility - (100 - predator))
-
-    return -score  # 높은 점수일수록 적합
-
-def evolve(population, generations=10):
-    """세대를 거듭하며 진화"""
-    for _ in range(generations):
-        # 적합도 계산
-        fitness_scores = np.array([fitness(ind) for ind in population])
-
-        # 상위 절반 선택
-        survivors = population[np.argsort(fitness_scores)][-len(population)//2:]
-
-        # 다음 세대 생성 (교배 + 변이)
-        children = []
-        while len(children) < len(population):
-            parents = random.sample(list(survivors), 2)
-            child = (parents[0] + parents[1]) / 2
-            child += np.random.normal(0, 5, size=3)  # 변이
-            children.append(child)
-        population = np.array(children)
-
-    return population
-
-# -------------------
-# 진화 실행
-# -------------------
-final_population = evolve(population, num_generations)
-
-# -------------------
-# 결과 시각화
-# -------------------
-fig, ax = plt.subplots(figsize=(8, 6))
-ax.scatter(final_population[:,0], final_population[:,1],
-           c=final_population[:,2], cmap="viridis", s=80, alpha=0.8)
-
-ax.set_xlabel("털 두께")
-ax.set_ylabel("체구 크기")
-ax.set_title("최종 세대 개체 분포 (색=민첩성)")
+# 현재 세대 시각화
+pop, nms = st.session_state.history[st.session_state.gen]
+fig, ax = plt.subplots()
+sc = ax.scatter(pop[:,0], pop[:,1], c=pop[:,2], cmap="viridis", s=80)
+for i, nm in enumerate(nms): ax.text(pop[i,0]+1, pop[i,1]+1, nm, fontsize=6)
+ax.set_title(f"{st.session_state.gen} 세대 (색=민첩성)")
+plt.colorbar(sc, ax=ax, label="민첩성")
 st.pyplot(fig)
 
-st.subheader("📊 해석")
-st.write(f"""
-- 환경 온도({temp})에 맞춰 털 두께가 조정됨  
+# 상태 표시
+st.info(f"현재 세대: {st.session_state.gen} / 최대 {gens}")
+if st.session_state.gen == gens:
+    st.success("✅ 모든 세대 진화 완료!")
+
+
 - 먹이({food}) 상황에 따라 체구 크기 변화  
 - 포식자 압력({predator})이 높으면 민첩성이 발달  
 """)
