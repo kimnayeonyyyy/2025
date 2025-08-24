@@ -12,13 +12,13 @@ def logistic_growth(t, N0, r, K):
 # =============================
 # Streamlit basic config
 # =============================
-st.set_page_config(page_title="Bacterial Growth Simulator", page_icon="🧫", layout="wide")
+st.set_page_config(page_title="세균 성장 시뮬레이터", page_icon="🧫", layout="wide")
 
-st.title("🧫 Bacterial Growth Simulator")
+st.title("🧫 세균 성장 시뮬레이터")
 st.markdown(
     """
-Bacterial populations often show an **S-shaped (sigmoid) growth curve** over time.  
-Adjust the parameters in the sidebar and observe how the population changes.
+세균 집단은 시간에 따라 보통 **S자 모양(시그모이드) 성장 곡선**을 보입니다.  
+사이드바에서 매개변수를 조절하고 세균 수가 어떻게 변하는지 살펴보세요.
     """
 )
 
@@ -26,16 +26,16 @@ Adjust the parameters in the sidebar and observe how the population changes.
 # Sidebar controls
 # =============================
 with st.sidebar:
-    st.header("⚙️ Parameters")
-    N0 = st.slider("Initial population (N₀)", 1, 100, 10)
-    r = st.slider("Growth rate (r)", 0.01, 1.0, 0.2, 0.01)
-    K = st.slider("Carrying capacity (K)", 50, 2000, 500, 10)
-    T = st.slider("Total time (t max)", 10, 200, 50, 1)
-    dt = st.slider("Time step (Δt)", 0.1, 5.0, 1.0, 0.1)
+    st.header("⚙️ 매개변수 설정")
+    N0 = st.slider("초기 개체수 (N₀)", 1, 100, 10)
+    r = st.slider("성장률 (r)", 0.01, 1.0, 0.2, 0.01)
+    K = st.slider("수용력 (K)", 50, 2000, 500, 10)
+    T = st.slider("총 시간 (t max)", 10, 200, 50, 1)
+    dt = st.slider("시간 간격 (Δt)", 0.1, 5.0, 1.0, 0.1)
 
-    st.subheader("🌍 Environment change")
-    event_time = st.slider("Change time", 0, T, int(T/2))
-    event_type = st.selectbox("Change type", ["None", "Add nutrients", "Antibiotics", "Resource loss"])
+    st.subheader("🌍 환경 변화")
+    event_time = st.slider("환경 변화 시점", 0, T, int(T/2))
+    event_type = st.selectbox("변화 종류", ["없음", "영양분 추가", "항생제 투여", "자원 손실"])
 
 # =============================
 # Simulation with environment change
@@ -52,19 +52,19 @@ N_before = logistic_growth(t[before_mask], N0, r, K)
 N0_event = N_before[-1]
 r2, K2 = r, K
 
-if event_type == "Add nutrients":
+if event_type == "영양분 추가":
     K2 = int(K * 1.5)
-elif event_type == "Antibiotics":
+elif event_type == "항생제 투여":
     r2 = r * 0.5
     N0_event = N0_event * 0.7  # sudden drop
-elif event_type == "Resource loss":
+elif event_type == "자원 손실":
     K2 = int(K * 0.5)
 
 N_after = logistic_growth(t[after_mask] - event_time, N0_event, r2, K2)
 
 # Combine
 N = np.concatenate([N_before, N_after])
-df = pd.DataFrame({"time": t, "bacteria": N})
+df = pd.DataFrame({"시간": t, "세균 개체수": N})
 
 # =============================
 # Visualization
@@ -72,27 +72,29 @@ df = pd.DataFrame({"time": t, "bacteria": N})
 col1, col2 = st.columns([1.2, 1])
 
 with col1:
-    st.subheader("📈 Population over time")
-    st.line_chart(df.set_index("time"))
+    st.subheader("📈 시간에 따른 세균 개체수")
+    st.line_chart(df.set_index("시간"))
 
 with col2:
-    st.subheader("📊 Growth curve (Matplotlib)")
+    st.subheader("📊 성장 곡선 (Matplotlib)")
     fig, ax = plt.subplots(figsize=(6,4))
-    ax.plot(t, N, label="Bacterial population", color="green")
+    ax.plot(t, N, label="세균 개체수", color="green")
 
-    # Mark carrying capacity line
-    ax.axhline(K, color="gray", linestyle="--", linewidth=1, label="Initial K")
-    if event_type != "None":
-        ax.axhline(K2, color="blue", linestyle=":", linewidth=1, label="New K")
-        ax.axvline(event_time, color="red", linestyle="--", linewidth=1, label="Environment change")
+    # Carrying capacity line
+    if event_type == "없음" or np.isclose(K2, K):
+        ax.axhline(K, color="gray", linestyle="--", linewidth=1, label="수용력 (K)")
+    else:
+        ax.hlines(K, xmin=t[0], xmax=event_time, colors="gray", linestyles="--", linewidth=1, label="초기 K")
+        ax.hlines(K2, xmin=event_time, xmax=t[-1], colors="blue", linestyles=":", linewidth=1, label="새로운 K")
+        ax.axvline(event_time, color="red", linestyle="--", linewidth=1, label="환경 변화 시점")
 
     # Annotate phases
-    ax.text(T*0.1, K*0.2, "Exponential phase", fontsize=8, color="darkgreen")
-    ax.text(T*0.6, K*0.9, "Stationary phase", fontsize=8, color="brown")
+    ax.text(T*0.1, K*0.2, "지수 성장기", fontsize=8, color="darkgreen")
+    ax.text(T*0.6, K*0.9, "정체기", fontsize=8, color="brown")
 
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Population")
-    ax.set_title("Bacterial Growth Curve with Environment Change")
+    ax.set_xlabel("시간")
+    ax.set_ylabel("세균 개체수")
+    ax.set_title("환경 변화에 따른 세균 성장 곡선")
     ax.legend()
     fig.tight_layout()
     st.pyplot(fig, use_container_width=True)
@@ -101,9 +103,9 @@ with col2:
 # Download data
 # =============================
 st.divider()
-st.subheader("💾 Download data")
+st.subheader("💾 데이터 다운로드")
 st.download_button(
-    label="Download CSV",
+    label="CSV 다운로드",
     data=df.to_csv(index=False),
     file_name="bacteria_growth.csv",
     mime="text/csv",
@@ -112,15 +114,15 @@ st.download_button(
 # =============================
 # Learning points
 # =============================
-with st.expander("📚 Learning points"):
+with st.expander("📚 학습 포인트"):
     st.markdown(
         """
-- **Exponential phase**: rapid growth at the beginning (resources are abundant).
-- **Stationary phase**: growth slows down due to limited resources.
-- **Carrying capacity (K)**: population size levels off near K.
-- **Environmental change** can alter K or r:
-  - Nutrients added → higher K.
-  - Antibiotics → lower r, sudden population drop.
-  - Resource loss → smaller K.
+- **지수 성장기**: 자원이 충분하여 빠르게 증가하는 시기
+- **정체기**: 자원이 부족해져 개체수가 일정해지는 시기
+- **수용력 (K)**: 환경이 지탱할 수 있는 최대 개체수
+- **환경 변화**에 따라 K 또는 r이 달라질 수 있음:
+  - 영양분 추가 → K 증가
+  - 항생제 투여 → r 감소, 개체수 급격히 감소
+  - 자원 손실 → K 감소
         """
     )
