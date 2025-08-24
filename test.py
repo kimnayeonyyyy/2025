@@ -76,25 +76,25 @@ with col1:
     st.line_chart(df.set_index("시간"))
 
 with col2:
-    st.subheader("📊 성장 곡선 (Matplotlib)")
+    st.subheader("📊 Growth curve (Matplotlib)")
     fig, ax = plt.subplots(figsize=(6,4))
-    ax.plot(t, N, label="세균 개체수", color="green")
+    ax.plot(t, N, label="Bacterial population", color="green")
 
     # Carrying capacity line
     if event_type == "없음" or np.isclose(K2, K):
-        ax.axhline(K, color="gray", linestyle="--", linewidth=1, label="수용력 (K)")
+        ax.axhline(K, color="gray", linestyle="--", linewidth=1, label="K (carrying capacity)")
     else:
-        ax.hlines(K, xmin=t[0], xmax=event_time, colors="gray", linestyles="--", linewidth=1, label="초기 K")
-        ax.hlines(K2, xmin=event_time, xmax=t[-1], colors="blue", linestyles=":", linewidth=1, label="새로운 K")
-        ax.axvline(event_time, color="red", linestyle="--", linewidth=1, label="환경 변화 시점")
+        ax.hlines(K, xmin=t[0], xmax=event_time, colors="gray", linestyles="--", linewidth=1, label="Initial K")
+        ax.hlines(K2, xmin=event_time, xmax=t[-1], colors="blue", linestyles=":", linewidth=1, label="New K")
+        ax.axvline(event_time, color="red", linestyle="--", linewidth=1, label="Environment change")
 
     # Annotate phases
-    ax.text(T*0.1, K*0.2, "지수 성장기", fontsize=8, color="darkgreen")
-    ax.text(T*0.6, K*0.9, "정체기", fontsize=8, color="brown")
+    ax.text(T*0.1, K*0.2, "Exponential phase", fontsize=8, color="darkgreen")
+    ax.text(T*0.6, K*0.9, "Stationary phase", fontsize=8, color="brown")
 
-    ax.set_xlabel("시간")
-    ax.set_ylabel("세균 개체수")
-    ax.set_title("환경 변화에 따른 세균 성장 곡선")
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Population")
+    ax.set_title("Bacterial growth curve with environmental change")
     ax.legend()
     fig.tight_layout()
     st.pyplot(fig, use_container_width=True)
@@ -117,9 +117,9 @@ st.download_button(
 with st.expander("📚 학습 포인트"):
     st.markdown(
         """
-- **지수 성장기**: 자원이 충분하여 빠르게 증가하는 시기
-- **정체기**: 자원이 부족해져 개체수가 일정해지는 시기
-- **수용력 (K)**: 환경이 지탱할 수 있는 최대 개체수
+- **지수 성장기 (Exponential phase)**: 자원이 충분하여 빠르게 증가하는 시기
+- **정체기 (Stationary phase)**: 자원이 부족해져 개체수가 일정해지는 시기
+- **수용력 (K, Carrying capacity)**: 환경이 지탱할 수 있는 최대 개체수
 - **환경 변화**에 따라 K 또는 r이 달라질 수 있음:
   - 영양분 추가 → K 증가
   - 항생제 투여 → r 감소, 개체수 급격히 감소
