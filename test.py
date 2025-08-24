@@ -4,90 +4,91 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # =============================
-# 세균 증식 모델 (로지스틱 성장식)
+# Bacterial growth model (Logistic growth)
 # =============================
 def logistic_growth(t, N0, r, K):
     """
-    로지스틱 성장 모델
+    Logistic growth model
     N(t) = K / (1 + ((K - N0)/N0) * exp(-r*t))
     """
     return K / (1 + ((K - N0) / N0) * np.exp(-r * t))
 
 # =============================
-# Streamlit 기본 설정
+# Streamlit basic config
 # =============================
-st.set_page_config(page_title="세균 증식 시뮬레이터", page_icon="🧫", layout="wide")
+st.set_page_config(page_title="Bacterial Growth Simulator", page_icon="🧫", layout="wide")
 
-st.title("🧫 세균 증식 시뮬레이터")
+st.title("🧫 Bacterial Growth Simulator")
 st.markdown(
     """
-세균 집단은 시간이 지남에 따라 **S자형(sigmoid) 성장 곡선**을 보입니다.  
-사이드바에서 초기 개체수, 성장률, 환경 수용력을 조절해보고 집단 크기 변화를 확인하세요.
+Bacterial populations often show an **S-shaped (sigmoid) growth curve** over time.  
+Adjust the initial population, growth rate, and carrying capacity in the sidebar and observe how the population changes.
     """
 )
 
 # =============================
-# 사이드바: 매개변수 입력
+# Sidebar controls
 # =============================
 with st.sidebar:
-    st.header("⚙️ 매개변수 설정")
-    N0 = st.slider("초기 개체수 (N₀)", 1, 100, 10)   # 초기값
-    r = st.slider("성장률 (r)", 0.01, 1.0, 0.2, 0.01) # 세균 증식 속도
-    K = st.slider("환경 수용력 (K)", 50, 2000, 500, 10) # 최대 개체수
-    T = st.slider("총 시간 (t max)", 10, 200, 50, 1)   # 시뮬레이션 시간
-    dt = st.slider("시간 간격 (Δt)", 0.1, 5.0, 1.0, 0.1) # 시간 해상도
+    st.header("⚙️ Parameters")
+    N0 = st.slider("Initial population (N₀)", 1, 100, 10)   # initial value
+    r = st.slider("Growth rate (r)", 0.01, 1.0, 0.2, 0.01) # growth rate
+    K = st.slider("Carrying capacity (K)", 50, 2000, 500, 10) # maximum population
+    T = st.slider("Total time (t max)", 10, 200, 50, 1)   # simulation time
+    dt = st.slider("Time step (Δt)", 0.1, 5.0, 1.0, 0.1) # resolution
 
 # =============================
-# 시뮬레이션 실행
+# Simulation
 # =============================
-t = np.arange(0, T+dt, dt)        # 시간 벡터
-N = logistic_growth(t, N0, r, K)  # 세균 개체수 계산
+t = np.arange(0, T+dt, dt)        # time vector
+N = logistic_growth(t, N0, r, K)  # bacterial population
 
-# DataFrame으로 변환 (그래프 & 다운로드용)
+# DataFrame for plotting and download
 df = pd.DataFrame({"time": t, "bacteria": N})
 
 # =============================
-# 결과 시각화
+# Visualization
 # =============================
 col1, col2 = st.columns([1.2, 1])
 
-# Streamlit 내장 line_chart
+# Streamlit built-in line_chart
 with col1:
-    st.subheader("📈 세균 개체수 시간 변화")
+    st.subheader("📈 Population over time")
     st.line_chart(df.set_index("time"))
 
-# Matplotlib 그래프
+# Matplotlib graph
 with col2:
-    st.subheader("📊 성장 곡선 (Matplotlib)")
+    st.subheader("📊 Growth curve (Matplotlib)")
     fig, ax = plt.subplots(figsize=(5,4))
-    ax.plot(t, N, label="세균 개체수", color="green")
-    ax.set_xlabel("시간")
-    ax.set_ylabel("개체수")
-    ax.set_title("세균 증식 곡선")
+    ax.plot(t, N, label="Bacterial population", color="green")
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Population")
+    ax.set_title("Bacterial Growth Curve")
     ax.legend()
+    fig.tight_layout()
     st.pyplot(fig, use_container_width=True)
 
 # =============================
-# 데이터 다운로드 기능
+# Download data
 # =============================
 st.divider()
-st.subheader("💾 데이터 다운로드")
+st.subheader("💾 Download data")
 st.download_button(
-    label="CSV 다운로드",
+    label="Download CSV",
     data=df.to_csv(index=False),
     file_name="bacteria_growth.csv",
     mime="text/csv",
 )
 
 # =============================
-# 학습 포인트 설명
+# Learning points
 # =============================
-with st.expander("📚 학습 포인트"):
+with st.expander("📚 Learning points"):
     st.markdown(
         """
-- **지수적 증가기**: 초기에는 빠르게 증가 (자원이 충분).
-- **정체기**: 개체 수가 커질수록 성장률 감소.
-- **환경 수용력(K)**에 가까워질수록 성장이 멈춤.
-- 실제 세균 배양 실험에서도 유사한 곡선을 관찰할 수 있습니다.
+- **Exponential phase**: rapid growth at the beginning (resources are abundant).
+- **Stationary phase**: growth slows down due to limited resources.
+- **Carrying capacity (K)**: population size levels off near K.
+- Real bacterial cultures often show a very similar curve.
         """
     )
